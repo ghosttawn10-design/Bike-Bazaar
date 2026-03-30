@@ -43,8 +43,11 @@ export default function ProductDetail() {
 
   const handleWhatsApp = () => {
     if (!product) return;
-    const phone = adminProfile?.whatsappNumber || adminProfile?.phone || "1234567890";
-    const text = encodeURIComponent(`Hello, I am interested in the ${product.name} listed on your website.`);
+    const phone = (adminProfile as Record<string, unknown>)?.whatsappNumber as string || (adminProfile as Record<string, unknown>)?.phone as string || "1234567890";
+    const productUrl = `${window.location.origin}/products/${product.id}`;
+    const text = encodeURIComponent(
+      `Hello, I am interested in the *${product.name}* listed on your website.\n\nView listing: ${productUrl}\n\nPlease let me know if it is still available.`
+    );
     window.open(`https://wa.me/${phone.replace(/\D/g,'')}?text=${text}`, "_blank");
   };
 

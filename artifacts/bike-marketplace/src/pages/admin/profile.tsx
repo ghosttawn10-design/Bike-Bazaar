@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Save, User, Link as LinkIcon, Phone, Type, Lock, Image as ImageIcon, Bell, MapPin } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Save, User, Link as LinkIcon, Phone, Type, Lock, Image as ImageIcon, Bell, MapPin, Upload, Send } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { useGetAdminProfile, useUpdateAdminProfile } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,9 @@ export default function AdminProfile() {
   });
 
   const [passwordData, setPasswordData] = useState({ newPassword: "", confirmPassword: "" });
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const heroFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (p) {
@@ -71,6 +74,41 @@ export default function AdminProfile() {
       });
     }
   }, [profile]);
+
+  const handleHeroFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingHero(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const res = await fetch("/api/admin/upload-hero", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json() as { url: string };
+      setFormData(prev => ({ ...prev, heroImage: data.url }));
+      toast({ title: "Image uploaded successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/profile'] });
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploadingHero(false);
+      if (heroFileRef.current) heroFileRef.current.value = "";
+    }
+  };
+
+  const handleTestEmail = async () => {
+    setSendingTestEmail(true);
+    try {
+      const res = await fetch("/api/admin/test-email", { method: "POST", credentials: "include" });
+      const data = await res.json() as { success?: boolean; message?: string };
+      if (!res.ok) throw new Error(data.message || "Failed");
+      toast({ title: "Test email sent!", description: "Check your inbox to confirm notifications are working." });
+    } catch (err) {
+      toast({ title: "Test email failed", description: String(err), variant: "destructive" });
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,9 +180,40 @@ export default function AdminProfile() {
                 <ImageIcon className="w-4 h-4" /> Homepage Hero Image
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 md:p-8 space-y-4">
+            <CardContent className="p-6 md:p-8 space-y-5">
+              {/* File Upload */}
+              <div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Upload from your computer</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={heroFileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleHeroFileUpload}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={uploadingHero}
+                    onClick={() => heroFileRef.current?.click()}
+                    className="rounded-none border-dashed border-border/70 h-10 px-6 font-mono text-xs uppercase tracking-widest hover:border-primary/60"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploadingHero ? "Uploading..." : "Choose Image File"}
+                  </Button>
+                  <span className="text-[11px] text-muted-foreground font-mono">JPG, PNG, WebP — max 5MB</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-border/40" />
+                <span className="text-[11px] text-muted-foreground font-mono uppercase tracking-widest">or paste URL</span>
+                <div className="flex-1 h-px bg-border/40" />
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="heroImage" className="text-xs uppercase tracking-widest text-muted-foreground">Hero Background Image URL</Label>
+                <Label htmlFor="heroImage" className="text-xs uppercase tracking-widest text-muted-foreground">Image URL</Label>
                 <Input
                   id="heroImage"
                   value={formData.heroImage}
@@ -152,8 +221,9 @@ export default function AdminProfile() {
                   className="rounded-none bg-background border-border/50 font-mono text-sm"
                   placeholder="https://example.com/your-hero-image.jpg"
                 />
-                <p className="text-[11px] text-muted-foreground font-mono">Paste any direct image URL. Leave blank to use the default ATV image.</p>
+                <p className="text-[11px] text-muted-foreground font-mono">Leave blank to use the default ATV image.</p>
               </div>
+
               {formData.heroImage && (
                 <div className="relative h-48 overflow-hidden border border-border/50 rounded-none">
                   <img
@@ -316,7 +386,7 @@ export default function AdminProfile() {
               {formData.emailNotificationsEnabled && (
                 <div className="space-y-5 pt-2">
                   <p className="text-xs text-muted-foreground font-mono border-l-2 border-primary pl-3">
-                    Enter your SMTP server details below. Use Gmail, Outlook, or any SMTP provider. For Gmail, use an App Password (not your main password).
+                    Enter your SMTP details below. Use Gmail, Outlook, or any SMTP provider. For Gmail, generate an App Password at myaccount.google.com/apppasswords.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">

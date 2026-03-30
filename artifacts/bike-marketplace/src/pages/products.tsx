@@ -32,7 +32,8 @@ export default function Products() {
     search: debouncedSearch || undefined,
     category: category || undefined,
     brand: brand || undefined,
-    maxPrice: priceRange[1] < 100000 ? priceRange[1] : undefined
+    maxPrice: priceRange[1] < 100000 ? priceRange[1] : undefined,
+    limit: 100,
   });
 
   const { data: categories } = useGetCategories();
