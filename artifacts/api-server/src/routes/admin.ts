@@ -86,14 +86,16 @@ router.put("/profile", async (req, res) => {
       return res.status(401).json({ error: "unauthorized", message: "Not authenticated" });
     }
 
-    const { name, email, phone, whatsappNumber, socialLinks } = req.body;
+    const { name, email, phone, whatsappNumber, appName, socialLinks, password } = req.body;
 
     const updateData: Partial<typeof adminProfileTable.$inferInsert> = { updatedAt: new Date() };
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
     if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
+    if (appName !== undefined) updateData.appName = appName;
     if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
+    if (password && password.length >= 6) updateData.passwordHash = hashPassword(password);
 
     const [admin] = await db.update(adminProfileTable).set(updateData).where(eq(adminProfileTable.id, adminId)).returning();
     if (!admin) return res.status(404).json({ error: "not_found", message: "Admin profile not found" });
@@ -112,6 +114,7 @@ function formatAdmin(a: typeof adminProfileTable.$inferSelect) {
     email: a.email,
     phone: a.phone,
     whatsappNumber: a.whatsappNumber,
+    appName: a.appName ?? "ApexMoto",
     socialLinks: a.socialLinks ?? {},
   };
 }

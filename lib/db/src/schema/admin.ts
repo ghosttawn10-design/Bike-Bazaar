@@ -9,6 +9,7 @@ export const adminProfileTable = pgTable("admin_profile", {
   phone: text("phone").notNull().default(""),
   passwordHash: text("password_hash").notNull(),
   whatsappNumber: text("whatsapp_number").notNull().default(""),
+  appName: text("app_name").notNull().default("ApexMoto"),
   socialLinks: jsonb("social_links").$type<{
     instagram?: string | null;
     twitter?: string | null;

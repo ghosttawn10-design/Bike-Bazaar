@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Save, User, Link as LinkIcon, Phone } from "lucide-react";
+import { Save, User, Link as LinkIcon, Phone, Type, Lock } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { useGetAdminProfile, useUpdateAdminProfile } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,18 @@ export default function AdminProfile() {
     email: "",
     phone: "",
     whatsappNumber: "",
+    appName: "",
     socialLinks: {
       instagram: "",
       twitter: "",
       facebook: "",
       website: ""
     }
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    newPassword: "",
+    confirmPassword: ""
   });
 
   useEffect(() => {
@@ -35,6 +41,7 @@ export default function AdminProfile() {
         email: profile.email || "",
         phone: profile.phone || "",
         whatsappNumber: profile.whatsappNumber || "",
+        appName: (profile as Record<string, unknown>).appName as string || "ApexMoto",
         socialLinks: {
           instagram: profile.socialLinks?.instagram || "",
           twitter: profile.socialLinks?.twitter || "",
@@ -47,106 +54,187 @@ export default function AdminProfile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({
-      data: formData
-    }, {
+
+    if (passwordData.newPassword && passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    if (passwordData.newPassword && passwordData.newPassword.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+
+    const payload: Record<string, unknown> = { ...formData };
+    if (passwordData.newPassword) {
+      payload.password = passwordData.newPassword;
+    }
+
+    updateMutation.mutate({ data: payload as Parameters<typeof updateMutation.mutate>[0]["data"] }, {
       onSuccess: () => {
-        toast({ title: "Profile configuration updated" });
+        toast({ title: "Configuration saved successfully" });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/profile'] });
+        setPasswordData({ newPassword: "", confirmPassword: "" });
       },
       onError: () => {
-        toast({ title: "Failed to update profile", variant: "destructive" });
+        toast({ title: "Failed to save configuration", variant: "destructive" });
       }
     });
   };
 
-  if (isLoading) return <AdminLayout><div className="p-8">Loading configuration...</div></AdminLayout>;
+  if (isLoading) return <AdminLayout><div className="p-8 font-mono text-muted-foreground">Loading configuration...</div></AdminLayout>;
 
   return (
     <AdminLayout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tight">System Administrator</h1>
-          <p className="text-muted-foreground font-mono">Configure contact protocols and network identity.</p>
+          <h1 className="text-3xl font-black uppercase tracking-tight">System Configuration</h1>
+          <p className="text-muted-foreground font-mono">Manage platform identity, credentials, and contact protocols.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+
+          {/* App Branding */}
+          <Card className="rounded-none border-primary/30 bg-card">
+            <CardHeader className="border-b border-border/50">
+              <CardTitle className="uppercase tracking-widest text-sm text-primary flex items-center gap-2">
+                <Type className="w-4 h-4" /> Platform Identity
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 md:p-8 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="appName" className="text-xs uppercase tracking-widest text-muted-foreground">
+                  App / Brand Name
+                </Label>
+                <Input
+                  id="appName"
+                  required
+                  value={formData.appName}
+                  onChange={e => setFormData({ ...formData, appName: e.target.value })}
+                  className="rounded-none bg-background border-border/50 font-bold text-lg tracking-wider max-w-sm"
+                  placeholder="e.g. ApexMoto"
+                />
+                <p className="text-[11px] text-muted-foreground font-mono">
+                  This name appears in the site header, footer, and browser tab. Changes take effect immediately after saving.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Core Identity */}
           <Card className="rounded-none border-border/50 bg-card">
             <CardHeader className="border-b border-border/50">
               <CardTitle className="uppercase tracking-widest text-sm text-primary flex items-center gap-2">
-                <User className="w-4 h-4" /> Core Identity
+                <User className="w-4 h-4" /> Admin Identity
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-xs uppercase tracking-widest text-muted-foreground">Admin Designation</Label>
-                  <Input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="rounded-none bg-background border-border/50 font-mono" />
+                  <Label htmlFor="name" className="text-xs uppercase tracking-widest text-muted-foreground">Display Name</Label>
+                  <Input id="name" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="rounded-none bg-background border-border/50 font-mono" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">System Email</Label>
-                  <Input id="email" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="rounded-none bg-background border-border/50 font-mono" />
+                  <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">Login Email</Label>
+                  <Input id="email" type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="rounded-none bg-background border-border/50 font-mono" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Password Change */}
           <Card className="rounded-none border-border/50 bg-card">
             <CardHeader className="border-b border-border/50">
               <CardTitle className="uppercase tracking-widest text-sm text-primary flex items-center gap-2">
-                <Phone className="w-4 h-4" /> Communication Protocols
+                <Lock className="w-4 h-4" /> Change Password
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-xs uppercase tracking-widest text-muted-foreground">Standard Voice Line</Label>
-                  <Input id="phone" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="rounded-none bg-background border-border/50 font-mono" placeholder="+1..." />
+                  <Label htmlFor="newPassword" className="text-xs uppercase tracking-widest text-muted-foreground">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    className="rounded-none bg-background border-border/50 font-mono"
+                    placeholder="Leave blank to keep current"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp" className="text-xs uppercase tracking-widest text-muted-foreground">Encrypted Text (WhatsApp)</Label>
-                  <Input id="whatsapp" value={formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="rounded-none bg-background border-border/50 font-mono" placeholder="+1..." />
-                  <p className="text-[10px] text-muted-foreground font-mono mt-1">Used for direct buyer inquiries from product pages.</p>
+                  <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-widest text-muted-foreground">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    className="rounded-none bg-background border-border/50 font-mono"
+                    placeholder="Re-enter new password"
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-mono mt-3">Minimum 6 characters. Leave blank to keep your current password unchanged.</p>
+            </CardContent>
+          </Card>
+
+          {/* Communication */}
+          <Card className="rounded-none border-border/50 bg-card">
+            <CardHeader className="border-b border-border/50">
+              <CardTitle className="uppercase tracking-widest text-sm text-primary flex items-center gap-2">
+                <Phone className="w-4 h-4" /> Contact Channels
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 md:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-xs uppercase tracking-widest text-muted-foreground">Phone Number</Label>
+                  <Input id="phone" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="rounded-none bg-background border-border/50 font-mono" placeholder="+1..." />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp" className="text-xs uppercase tracking-widest text-muted-foreground">WhatsApp Number</Label>
+                  <Input id="whatsapp" value={formData.whatsappNumber} onChange={e => setFormData({ ...formData, whatsappNumber: e.target.value })} className="rounded-none bg-background border-border/50 font-mono" placeholder="+1..." />
+                  <p className="text-[10px] text-muted-foreground font-mono">Used for direct buyer contact on product pages.</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Social Links */}
           <Card className="rounded-none border-border/50 bg-card">
             <CardHeader className="border-b border-border/50">
               <CardTitle className="uppercase tracking-widest text-sm text-primary flex items-center gap-2">
-                <LinkIcon className="w-4 h-4" /> External Nodes
+                <LinkIcon className="w-4 h-4" /> Social & Web Links
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="instagram" className="text-xs uppercase tracking-widest text-muted-foreground">Instagram Node</Label>
-                  <Input id="instagram" value={formData.socialLinks.instagram} onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, instagram: e.target.value}})} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://instagram.com/..." />
+                  <Label htmlFor="instagram" className="text-xs uppercase tracking-widest text-muted-foreground">Instagram</Label>
+                  <Input id="instagram" value={formData.socialLinks.instagram} onChange={e => setFormData({ ...formData, socialLinks: { ...formData.socialLinks, instagram: e.target.value } })} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://instagram.com/..." />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="twitter" className="text-xs uppercase tracking-widest text-muted-foreground">X (Twitter) Node</Label>
-                  <Input id="twitter" value={formData.socialLinks.twitter} onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, twitter: e.target.value}})} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://x.com/..." />
+                  <Label htmlFor="twitter" className="text-xs uppercase tracking-widest text-muted-foreground">X (Twitter)</Label>
+                  <Input id="twitter" value={formData.socialLinks.twitter} onChange={e => setFormData({ ...formData, socialLinks: { ...formData.socialLinks, twitter: e.target.value } })} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://x.com/..." />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="facebook" className="text-xs uppercase tracking-widest text-muted-foreground">Facebook Node</Label>
-                  <Input id="facebook" value={formData.socialLinks.facebook} onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, facebook: e.target.value}})} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://facebook.com/..." />
+                  <Label htmlFor="facebook" className="text-xs uppercase tracking-widest text-muted-foreground">Facebook</Label>
+                  <Input id="facebook" value={formData.socialLinks.facebook} onChange={e => setFormData({ ...formData, socialLinks: { ...formData.socialLinks, facebook: e.target.value } })} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://facebook.com/..." />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="website" className="text-xs uppercase tracking-widest text-muted-foreground">Main HQ Site</Label>
-                  <Input id="website" value={formData.socialLinks.website} onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, website: e.target.value}})} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://..." />
+                  <Label htmlFor="website" className="text-xs uppercase tracking-widest text-muted-foreground">Website URL</Label>
+                  <Input id="website" value={formData.socialLinks.website} onChange={e => setFormData({ ...formData, socialLinks: { ...formData.socialLinks, website: e.target.value } })} className="rounded-none bg-background border-border/50 font-mono" placeholder="https://..." />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <div className="flex justify-end">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={updateMutation.isPending}
               className="h-14 px-12 rounded-none uppercase tracking-widest font-bold text-lg"
             >
-              {updateMutation.isPending ? "Applying Changes..." : <><Save className="w-5 h-5 mr-2" /> Save Configuration</>}
+              {updateMutation.isPending ? "Saving..." : <><Save className="w-5 h-5 mr-2" /> Save All Changes</>}
             </Button>
           </div>
         </form>

@@ -12,11 +12,13 @@ import { useState, useEffect } from "react";
 import { useAdminLogout, useGetAdminMe } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useAppName } from "@/hooks/use-app-name";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(true);
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const appName = useAppName();
 
   const { data: adminMe, isLoading, error } = useGetAdminMe();
   const logout = useAdminLogout();
@@ -52,7 +54,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:relative`}>
         <div className="flex h-16 items-center justify-between px-6 border-b border-sidebar-border">
-          <span className="text-xl font-bold uppercase tracking-wider text-sidebar-foreground">Apex<span className="text-primary">Admin</span></span>
+          <span className="text-xl font-bold uppercase tracking-wider text-sidebar-foreground">{appName}<span className="text-primary"> Admin</span></span>
           <button className="md:hidden text-sidebar-foreground" onClick={() => setIsOpen(false)}>
             <X size={20} />
           </button>
@@ -101,7 +103,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <button className="text-foreground" onClick={() => setIsOpen(true)}>
             <Menu size={24} />
           </button>
-          <span className="font-bold uppercase tracking-wider text-foreground">Apex<span className="text-primary">Admin</span></span>
+          <span className="font-bold uppercase tracking-wider text-foreground">{appName}<span className="text-primary"> Admin</span></span>
         </header>
         
         <main className="flex-1 overflow-auto p-6 md:p-8 bg-muted/20">
