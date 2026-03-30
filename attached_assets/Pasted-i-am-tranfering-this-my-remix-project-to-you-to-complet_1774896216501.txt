@@ -1,0 +1,69 @@
+i am tranfering this my remix project to you to complete it ,if not done or done well
+
+prompt:
+
+Everything looks very good so far, and I’m really satisfied with the progress. However, I need a few important improvements and corrections to better align the platform with its core purpose.
+
+First, the website should primarily focus on quad bikes (ATVs) rather than standard two-wheel motorbikes. Right now, the emphasis leans too much toward motorbikes, but the main product should clearly be quad bikes. Please adjust the platform so that quad bikes are the dominant focus across the entire site.
+
+For example, even the third featured image currently shows a motorbike—this should be replaced with a quad bike to maintain consistency with the platform’s main offering.
+
+⸻
+
+Functional & Admin Improvements
+
+While the current functionality is good, I want you to enhance it further and ensure everything works smoothly, especially on the admin side:
+ • The admin should be able to:
+ • View all posted items (products, images, and content)
+ • Edit or update any existing content
+ • Replace images when needed
+ • Modify any previously added information without restrictions
+ • Ensure that all existing data (including items you’ve already added) remains fully editable by the admin.
+
+⸻
+
+App Customization
+ • The app name (“Apex Moto”) is well presented, but it must be editable by the admin.
+ • Make sure the admin can easily update the app name directly from the dashboard at any time.
+
+⸻
+
+Security & Best Practices
+ • Move all sensitive data (such as API keys, Supabase credentials, and URLs) into a .env file.
+ • This is important for:
+ • Security
+ • Clean code management
+ • Easy deployment across different platforms
+
+⸻
+
+Deployment Preparation (Render)
+
+Since I’ll be deploying the app on Render, I need you to:
+ • Provide the correct configuration and environment variables required for deployment
+ • Specify exactly what values I should input on Render
+ • Ensure the app is production-ready and deploys without issues (especially for static hosting if applicable)
+
+⸻
+
+Admin Access
+
+At the end, please provide:
+ • Admin login credentials
+ • Confirmation that the admin email and password can be updated from within the dashboard
+
+⸻
+
+Final Expectation
+
+Overall, I’d like a more refined, production-ready version of the application with:
+ • Improved focus on quad bikes (ATVs)
+ • Fully functional and flexible admin controls
+ • Secure configuration using .env
+ • Clear deployment guidance for Render
+
+You’ve already done a great job—this is just about polishing and making the system more robust and adaptable.
+
+this is my superbase info:
+VITE_SUPABASE_URL=https://togllsipnxhgttrfhkjo.supabase.co
+VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_LYUARO2WgrtD0WVKzV3LqQ_kTbuS7zk
