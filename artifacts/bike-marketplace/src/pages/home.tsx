@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PublicLayout } from "@/components/layout/public-layout";
 import { ProductCard } from "@/components/product-card";
-import { useGetFeaturedProducts } from "@workspace/api-client-react";
+import { useGetFeaturedProducts, useGetAdminProfile } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const DEFAULT_HERO = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=1600";
 
 const categories = [
   {
@@ -50,6 +52,10 @@ const categories = [
 export default function Home() {
   const [search, setSearch] = useState("");
   const { data: featuredProducts, isLoading } = useGetFeaturedProducts();
+  const { data: adminProfile } = useGetAdminProfile();
+
+  const heroImage = (adminProfile as Record<string, unknown>)?.heroImage as string | undefined;
+  const heroBg = heroImage && heroImage.trim() ? heroImage : DEFAULT_HERO;
 
   return (
     <PublicLayout>
@@ -57,7 +63,7 @@ export default function Home() {
       <section className="relative h-[90vh] min-h-[600px] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=1600"
+            src={heroBg}
             alt="Quad Bike Hero"
             className="w-full h-full object-cover object-center opacity-45"
           />

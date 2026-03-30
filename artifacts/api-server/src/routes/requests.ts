@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, requestsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
+import { sendAdminNotificationEmail } from "../lib/mailer.js";
 
 const router: IRouter = Router();
 
@@ -8,16 +9,10 @@ router.get("/", async (req, res) => {
   try {
     const { status, bikeId } = req.query as Record<string, string>;
     const conditions = [];
-
     if (status) conditions.push(eq(requestsTable.status, status));
     if (bikeId) conditions.push(eq(requestsTable.bikeId, parseInt(bikeId)));
-
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const requests = await db.select().from(requestsTable)
-      .where(whereClause)
-      .orderBy(sql`${requestsTable.createdAt} DESC`);
-
+    const requests = await db.select().from(requestsTable).where(whereClause).orderBy(sql`${requestsTable.createdAt} DESC`);
     res.json(requests.map(formatRequest));
   } catch (err) {
     req.log.error({ err }, "Failed to get requests");
@@ -28,21 +23,33 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { name, email, phone, location, bikeId, bikeName, message } = req.body;
-
     if (!name || !email || !phone || !location) {
       return res.status(400).json({ error: "validation_error", message: "Missing required fields" });
     }
-
     const [request] = await db.insert(requestsTable).values({
-      name,
-      email,
-      phone,
-      location,
+      name, email, phone, location,
       bikeId: bikeId ?? null,
       bikeName: bikeName ?? null,
       message: message ?? null,
       status: "pending",
     }).returning();
+
+    // Non-blocking email notification
+    sendAdminNotificationEmail(
+      `New Inquiry from ${name}`,
+      `<div style="font-family:sans-serif;max-width:600px;margin:auto;background:#111;color:#fff;padding:32px;border-radius:8px;">
+        <h2 style="color:#ff4500;margin-top:0;">New Customer Inquiry</h2>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><td style="padding:8px 0;color:#aaa;width:140px;">Name</td><td style="padding:8px 0;font-weight:bold;">${name}</td></tr>
+          <tr><td style="padding:8px 0;color:#aaa;">Email</td><td style="padding:8px 0;">${email}</td></tr>
+          <tr><td style="padding:8px 0;color:#aaa;">Phone</td><td style="padding:8px 0;">${phone}</td></tr>
+          <tr><td style="padding:8px 0;color:#aaa;">Location</td><td style="padding:8px 0;">${location}</td></tr>
+          ${bikeName ? `<tr><td style="padding:8px 0;color:#aaa;">Vehicle</td><td style="padding:8px 0;">${bikeName}</td></tr>` : ""}
+          ${message ? `<tr><td style="padding:8px 0;color:#aaa;vertical-align:top;">Message</td><td style="padding:8px 0;">${message.replace(/\n/g, "<br>")}</td></tr>` : ""}
+        </table>
+        <p style="margin-top:24px;font-size:12px;color:#666;">Login to your admin dashboard to follow up.</p>
+      </div>`
+    ).catch(() => {/* ignore email errors so the request still saves */});
 
     res.status(201).json(formatRequest(request));
   } catch (err) {
@@ -55,10 +62,8 @@ router.get("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "invalid_id", message: "Invalid request ID" });
-
     const [request] = await db.select().from(requestsTable).where(eq(requestsTable.id, id));
     if (!request) return res.status(404).json({ error: "not_found", message: "Request not found" });
-
     res.json(formatRequest(request));
   } catch (err) {
     req.log.error({ err }, "Failed to get request");
@@ -70,18 +75,14 @@ router.patch("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "invalid_id", message: "Invalid request ID" });
-
     const { status } = req.body;
     if (!status) return res.status(400).json({ error: "validation_error", message: "Status is required" });
-
     const validStatuses = ["pending", "contacted", "resolved"];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "validation_error", message: "Invalid status. Must be: pending, contacted, or resolved" });
+      return res.status(400).json({ error: "validation_error", message: "Invalid status" });
     }
-
     const [request] = await db.update(requestsTable).set({ status }).where(eq(requestsTable.id, id)).returning();
     if (!request) return res.status(404).json({ error: "not_found", message: "Request not found" });
-
     res.json(formatRequest(request));
   } catch (err) {
     req.log.error({ err }, "Failed to update request");
@@ -93,10 +94,8 @@ router.delete("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "invalid_id", message: "Invalid request ID" });
-
     const [deleted] = await db.delete(requestsTable).where(eq(requestsTable.id, id)).returning();
     if (!deleted) return res.status(404).json({ error: "not_found", message: "Request not found" });
-
     res.json({ success: true, message: "Request deleted" });
   } catch (err) {
     req.log.error({ err }, "Failed to delete request");
@@ -106,16 +105,9 @@ router.delete("/:id", async (req, res) => {
 
 function formatRequest(r: typeof requestsTable.$inferSelect) {
   return {
-    id: r.id,
-    name: r.name,
-    email: r.email,
-    phone: r.phone,
-    location: r.location,
-    bikeId: r.bikeId ?? null,
-    bikeName: r.bikeName ?? null,
-    message: r.message ?? null,
-    status: r.status,
-    createdAt: r.createdAt.toISOString(),
+    id: r.id, name: r.name, email: r.email, phone: r.phone, location: r.location,
+    bikeId: r.bikeId ?? null, bikeName: r.bikeName ?? null, message: r.message ?? null,
+    status: r.status, createdAt: r.createdAt.toISOString(),
   };
 }
 
