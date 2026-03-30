@@ -2,7 +2,7 @@
 
 ## Overview
 
-pnpm workspace monorepo — Powersport Marketplace. A premium, mobile-first platform for buying/selling motorcycles, scooters, quad bikes, and ATVs. Features a futuristic dark UI, 3D model viewer, WhatsApp integration, admin dashboard, and full CRUD.
+pnpm workspace monorepo — **Apex Moto** Powersport Marketplace. A premium, mobile-first platform focused on quad bikes (ATVs) and powersport machines. Features a futuristic dark UI, 3D model viewer, WhatsApp integration, admin dashboard, and full CRUD. Primary category is Quad Bikes / ATVs.
 
 ## Stack
 
@@ -79,7 +79,31 @@ All routes prefixed with `/api`
 
 ## Seed Data
 
-Seeded with 12 premium vehicles across all categories. Admin login: admin@powersport.com / admin123
+Seeded with 8 premium quad bike / ATV vehicles (Yamaha Raptor, Honda TRX450R, Polaris Sportsman, Kawasaki KFX, Can-Am Outlander, etc.)
+
+**Admin credentials:**
+- Email: admin@apexmoto.com
+- Password: Admin@2024!
+- Admin can change email and password anytime from the admin dashboard → System Configuration page.
+
+## Environment Variables
+
+Required env vars (see `.env.example` for details):
+- `DATABASE_URL` — PostgreSQL connection string
+- `SESSION_SECRET` — Long random string for session signing
+- `NODE_ENV` — set to `production` for deployment
+
+## Database Setup
+
+Run schema migrations (creates tables):
+```
+pnpm --filter @workspace/db run push
+```
+
+## Render Deployment
+
+- API server: Web Service — build `pnpm install && pnpm --filter @workspace/api-server run build`, start `pnpm --filter @workspace/api-server run start`
+- Frontend: Static Site — build `pnpm install && pnpm --filter @workspace/bike-marketplace run build`, publish dir `artifacts/bike-marketplace/dist`
 
 ## Packages
 

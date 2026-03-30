@@ -25,10 +25,10 @@ const categories = [
     featured: false,
   },
   {
-    name: "Naked Bike",
-    label: "Naked Bikes",
-    description: "Raw & aggressive",
-    image: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=800",
+    name: "Quad Bike",
+    label: "Off-Road ATVs",
+    description: "Built for the wild",
+    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&q=80&w=800",
     featured: false,
   },
   {
@@ -171,15 +171,15 @@ export default function Home() {
                 },
                 {
                   label: "Utility Quads",
-                  img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&q=80&w=500",
-                },
-                {
-                  label: "Racing Quads",
                   img: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&q=80&w=500",
                 },
                 {
-                  label: "Side-by-Sides",
-                  img: "https://images.unsplash.com/photo-1562796360-c2db48e9a19b?auto=format&fit=crop&q=80&w=500",
+                  label: "Racing Quads",
+                  img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=500",
+                },
+                {
+                  label: "Off-Road Quads",
+                  img: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&q=80&w=500",
                 },
               ].map((item, i) => (
                 <Link key={i} href="/products?category=Quad+Bike">
