@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface SocialLinks {
+  instagram?: string | null;
+  twitter?: string | null;
+  website?: string | null;
+  facebook?: string | null;
 }

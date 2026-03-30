@@ -5,7 +5,9 @@
  * Powersport Bike Marketplace API
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminProfile } from "./adminProfile";
 
-export interface HealthStatus {
-  status: string;
+export interface AdminLoginResponse {
+  success: boolean;
+  admin: AdminProfile;
 }

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Powersport Marketplace"
+version = "1.0.0"
+id = "artifacts/bike-marketplace"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22481
+
+[services.development]
+run = "pnpm --filter @workspace/bike-marketplace run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bike-marketplace", "run", "build" ]
+publicDir = "artifacts/bike-marketplace/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22481"
+BASE_PATH = "/"

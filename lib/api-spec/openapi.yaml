@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Powersport Bike Marketplace API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: products
+    description: Bike product operations
+  - name: requests
+    description: User interest request operations
+  - name: admin
+    description: Admin profile operations
+  - name: stats
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,421 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /products:
+    get:
+      operationId: getProducts
+      tags: [products]
+      summary: List all products
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: featured
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Products list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a new product (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductInput"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/featured:
+    get:
+      operationId: getFeaturedProducts
+      tags: [products]
+      summary: Get featured products
+      responses:
+        "200":
+          description: Featured products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /products/categories:
+    get:
+      operationId: getCategories
+      tags: [products]
+      summary: Get all unique categories with counts
+      responses:
+        "200":
+          description: Categories with counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryCount"
+
+  /products/brands:
+    get:
+      operationId: getBrands
+      tags: [products]
+      summary: Get all unique brands
+      responses:
+        "200":
+          description: Brands list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a single product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductInput"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /products/{id}/related:
+    get:
+      operationId: getRelatedProducts
+      tags: [products]
+      summary: Get related products for a given product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Related products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /requests:
+    get:
+      operationId: getRequests
+      tags: [requests]
+      summary: List all user interest requests (admin only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: bikeId
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Requests list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BikeRequest"
+    post:
+      operationId: createRequest
+      tags: [requests]
+      summary: Submit a bike interest request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequestInput"
+      responses:
+        "201":
+          description: Request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BikeRequest"
+
+  /requests/{id}:
+    get:
+      operationId: getRequest
+      tags: [requests]
+      summary: Get a single request (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BikeRequest"
+    patch:
+      operationId: updateRequestStatus
+      tags: [requests]
+      summary: Update request status (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRequestStatusInput"
+      responses:
+        "200":
+          description: Request updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BikeRequest"
+    delete:
+      operationId: deleteRequest
+      tags: [requests]
+      summary: Delete a request (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/profile:
+    get:
+      operationId: getAdminProfile
+      tags: [admin]
+      summary: Get admin profile
+      responses:
+        "200":
+          description: Admin profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProfile"
+    put:
+      operationId: updateAdminProfile
+      tags: [admin]
+      summary: Update admin profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminProfileInput"
+      responses:
+        "200":
+          description: Admin profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProfile"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/me:
+    get:
+      operationId: getAdminMe
+      tags: [admin]
+      summary: Get current authenticated admin
+      responses:
+        "200":
+          description: Current admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard overview stats
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/activity:
+    get:
+      operationId: getActivityData
+      tags: [stats]
+      summary: Get daily activity data for charts
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Activity data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityDataPoint"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +456,387 @@ components:
       required:
         - status
 
+    Product:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        brand:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        description:
+          type: string
+        engineCapacity:
+          type: string
+        topSpeed:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        model3dUrl:
+          type: string
+          nullable: true
+        featured:
+          type: boolean
+        specs:
+          $ref: "#/components/schemas/BikeSpecs"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - brand
+        - price
+        - category
+        - description
+        - images
+        - featured
+        - createdAt
+        - updatedAt
+
+    BikeSpecs:
+      type: object
+      properties:
+        engine:
+          type: string
+        horsepower:
+          type: string
+        torque:
+          type: string
+        weight:
+          type: string
+        fuelCapacity:
+          type: string
+        seatHeight:
+          type: string
+        transmission:
+          type: string
+        brakes:
+          type: string
+        suspension:
+          type: string
+        yearModel:
+          type: string
+
+    CreateProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+        brand:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        description:
+          type: string
+        engineCapacity:
+          type: string
+        topSpeed:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        model3dUrl:
+          type: string
+          nullable: true
+        featured:
+          type: boolean
+        specs:
+          $ref: "#/components/schemas/BikeSpecs"
+      required:
+        - name
+        - brand
+        - price
+        - category
+        - description
+        - images
+
+    UpdateProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+        brand:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        description:
+          type: string
+        engineCapacity:
+          type: string
+        topSpeed:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        model3dUrl:
+          type: string
+          nullable: true
+        featured:
+          type: boolean
+        specs:
+          $ref: "#/components/schemas/BikeSpecs"
+
+    ProductListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: number
+        limit:
+          type: number
+        offset:
+          type: number
+      required:
+        - products
+        - total
+        - limit
+        - offset
+
+    CategoryCount:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: number
+      required:
+        - category
+        - count
+
+    BikeRequest:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        bikeId:
+          type: number
+          nullable: true
+        bikeName:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - phone
+        - location
+        - status
+        - createdAt
+
+    CreateRequestInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        bikeId:
+          type: number
+          nullable: true
+        bikeName:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+      required:
+        - name
+        - email
+        - phone
+        - location
+
+    UpdateRequestStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    AdminProfile:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        socialLinks:
+          $ref: "#/components/schemas/SocialLinks"
+        whatsappNumber:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - phone
+
+    SocialLinks:
+      type: object
+      properties:
+        instagram:
+          type: string
+          nullable: true
+        twitter:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        facebook:
+          type: string
+          nullable: true
+
+    UpdateAdminProfileInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        whatsappNumber:
+          type: string
+        socialLinks:
+          $ref: "#/components/schemas/SocialLinks"
+
+    AdminLoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        admin:
+          $ref: "#/components/schemas/AdminProfile"
+      required:
+        - success
+        - admin
+
+    DashboardStats:
+      type: object
+      properties:
+        totalProducts:
+          type: number
+        totalRequests:
+          type: number
+        pendingRequests:
+          type: number
+        featuredProducts:
+          type: number
+        popularCategory:
+          type: string
+        recentRequestsCount:
+          type: number
+        requestsByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        productsByCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
+      required:
+        - totalProducts
+        - totalRequests
+        - pendingRequests
+        - featuredProducts
+        - recentRequestsCount
+        - requestsByStatus
+        - productsByCategory
+
+    StatusCount:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: number
+      required:
+        - status
+        - count
+
+    ActivityDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        requests:
+          type: number
+        products:
+          type: number
+      required:
+        - date
+        - requests
+        - products
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
