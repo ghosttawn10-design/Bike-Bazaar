@@ -1,6 +1,28 @@
 import { Router, type IRouter } from "express";
 import { db, productsTable } from "@workspace/db";
 import { eq, ilike, and, gte, lte, sql, or } from "drizzle-orm";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.join(__dirname, "../../uploads");
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `product-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
 
 const router: IRouter = Router();
 
@@ -215,5 +237,19 @@ function formatProduct(p: typeof productsTable.$inferSelect) {
     updatedAt: p.updatedAt.toISOString(),
   };
 }
+
+// Upload a product image file
+router.post("/upload-image", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "no_file", message: "No image file provided" });
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const imageUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+    res.json({ success: true, url: imageUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload product image");
+    res.status(500).json({ error: "internal_error", message: "Failed to upload image" });
+  }
+});
 
 export default router;

@@ -410,6 +410,22 @@ export default function AdminProfile() {
                       <Input value={formData.smtpFrom} onChange={e => setFormData({ ...formData, smtpFrom: e.target.value })} className="rounded-none bg-background border-border/50 font-mono" placeholder="noreply@yourdomain.com — defaults to SMTP username" />
                     </div>
                   </div>
+
+                  <div className="pt-3 border-t border-border/30 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1">
+                      <p className="text-[11px] text-muted-foreground font-mono">Save your settings first, then send a test email to verify everything works.</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={sendingTestEmail}
+                      onClick={handleTestEmail}
+                      className="rounded-none h-10 px-6 font-mono text-xs uppercase tracking-widest border-primary/50 hover:bg-primary/10 hover:border-primary shrink-0"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {sendingTestEmail ? "Sending..." : "Send Test Email"}
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
