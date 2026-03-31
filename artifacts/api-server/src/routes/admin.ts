@@ -3,23 +3,13 @@ import { db, adminProfileTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
 import { sendAdminNotificationEmail } from "../lib/mailer.js";
+import { uploadToSupabase } from "../lib/supabase-storage.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.join(__dirname, "../../uploads");
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `hero-${Date.now()}${ext}`);
-  },
-});
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Only image files are allowed"));
@@ -119,19 +109,17 @@ router.put("/profile", async (req, res) => {
   }
 });
 
-// Upload hero image as a file
+// Upload hero image as a file → Supabase Storage
 router.post("/upload-hero", upload.single("image"), async (req, res) => {
   try {
     const adminId = (req.session as Record<string, unknown>).adminId as number | undefined;
     if (!adminId) return res.status(401).json({ error: "unauthorized", message: "Not authenticated" });
     if (!req.file) return res.status(400).json({ error: "no_file", message: "No image file provided" });
 
-    // Build the URL - use the API base URL
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const host = req.headers["x-forwarded-host"] || req.headers.host;
-    const imageUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+    const ext = path.extname(req.file.originalname);
+    const filename = `hero/hero-${Date.now()}${ext}`;
+    const imageUrl = await uploadToSupabase(req.file.buffer, filename, req.file.mimetype);
 
-    // Also save it to the admin profile
     await db.update(adminProfileTable).set({ heroImage: imageUrl, updatedAt: new Date() }).where(eq(adminProfileTable.id, adminId));
 
     res.json({ success: true, url: imageUrl });

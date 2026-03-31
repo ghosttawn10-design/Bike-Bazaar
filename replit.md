@@ -16,6 +16,8 @@ pnpm workspace monorepo — **Apex Moto** Powersport Marketplace. A premium, mob
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Auth**: Session-based (express-session, SHA-256 password hash)
+- **File storage**: Supabase Storage (bucket: `uploads`, public CDN URLs)
+- **Database (production)**: Supabase PostgreSQL
 - **Build**: esbuild (CJS bundle)
 
 ## Structure
