@@ -1,0 +1,36 @@
+services:
+  # ── API Server (Web Service) ──────────────────────────────────────────────
+  - type: web
+    name: bike-bazaar-api
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @workspace/api-server run build
+    startCommand: pnpm --filter @workspace/api-server run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+  # ── Frontend (Static Site) ────────────────────────────────────────────────
+  - type: web
+    name: bike-bazaar-frontend
+    runtime: static
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @workspace/bike-marketplace run build
+    staticPublishPath: artifacts/bike-marketplace/dist/public
+    envVars:
+      - key: BASE_PATH
+        value: /
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
