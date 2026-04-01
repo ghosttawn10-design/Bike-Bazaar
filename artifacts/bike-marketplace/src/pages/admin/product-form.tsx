@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { ArrowLeft, Save, Plus, X, Image as ImageIcon, Upload, Link as LinkIcon } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
+import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -140,7 +141,7 @@ export default function AdminProductForm() {
       try {
         const fd = new FormData();
         fd.append("image", file);
-        const res = await fetch("/api/products/upload-image", { method: "POST", body: fd, credentials: "include" });
+        const res = await fetch(getApiUrl("/api/products/upload-image"), { method: "POST", body: fd, credentials: "include" });
         if (!res.ok) throw new Error("Upload failed");
         const data = await res.json() as { url: string };
         uploaded.push(data.url);

@@ -12,12 +12,11 @@ pnpm workspace monorepo — **Apex Moto** Powersport Marketplace. A premium, mob
 - **TypeScript version**: 5.9
 - **Frontend**: React + Vite, Tailwind CSS, Framer Motion, React Three Fiber / Three.js
 - **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
+- **Database**: Neon PostgreSQL (serverless) + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Auth**: Session-based (express-session, SHA-256 password hash)
 - **File storage**: Supabase Storage (bucket: `uploads`, public CDN URLs)
-- **Database (production)**: Supabase PostgreSQL
 - **Build**: esbuild (CJS bundle)
 
 ## Structure
@@ -91,9 +90,12 @@ Seeded with 8 premium quad bike / ATV vehicles (Yamaha Raptor, Honda TRX450R, Po
 ## Environment Variables
 
 Required env vars (see `.env.example` for details):
-- `DATABASE_URL` — PostgreSQL connection string
+- `DATABASE_URL` — Neon PostgreSQL connection string
 - `SESSION_SECRET` — Long random string for session signing
 - `NODE_ENV` — set to `production` for deployment
+- `SUPABASE_URL` — Supabase project URL (for file/image uploads only)
+- `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key (for file/image uploads only)
+- `VITE_API_URL` — Public URL of the API server (required in production when frontend and backend are on separate domains)
 
 ## Database Setup
 

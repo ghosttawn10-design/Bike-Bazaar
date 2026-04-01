@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Save, User, Link as LinkIcon, Phone, Type, Lock, Image as ImageIcon, Bell, MapPin, Upload, Send } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { useGetAdminProfile, useUpdateAdminProfile } from "@workspace/api-client-react";
+import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,7 +83,7 @@ export default function AdminProfile() {
     try {
       const fd = new FormData();
       fd.append("image", file);
-      const res = await fetch("/api/admin/upload-hero", { method: "POST", body: fd, credentials: "include" });
+      const res = await fetch(getApiUrl("/api/admin/upload-hero"), { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json() as { url: string };
       setFormData(prev => ({ ...prev, heroImage: data.url }));
@@ -99,7 +100,7 @@ export default function AdminProfile() {
   const handleTestEmail = async () => {
     setSendingTestEmail(true);
     try {
-      const res = await fetch("/api/admin/test-email", { method: "POST", credentials: "include" });
+      const res = await fetch(getApiUrl("/api/admin/test-email"), { method: "POST", credentials: "include" });
       const data = await res.json() as { success?: boolean; message?: string };
       if (!res.ok) throw new Error(data.message || "Failed");
       toast({ title: "Test email sent!", description: "Check your inbox to confirm notifications are working." });

@@ -47,3 +47,11 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+.config/
+.agents/
+.replit
+
+# Environment
+.env
+.env.local
+.env.*.local

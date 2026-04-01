@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
-
+import { setBaseUrl } from "@workspace/api-client-react";
 import Home from "@/pages/home";
 import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
@@ -15,6 +15,10 @@ import AdminProducts from "@/pages/admin/products";
 import AdminProductForm from "@/pages/admin/product-form";
 import AdminRequests from "@/pages/admin/requests";
 import AdminProfile from "@/pages/admin/profile";
+
+if (import.meta.env.VITE_API_URL) {
+  setBaseUrl(import.meta.env.VITE_API_URL as string);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,15 +36,15 @@ function Router() {
       <Route path="/products" component={Products} />
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/contact" component={Contact} />
-      
+
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/products" component={AdminProducts} />
       <Route path="/admin/products/new" component={AdminProductForm} />
       <Route path="/admin/products/:id/edit" component={AdminProductForm} />
       <Route path="/admin/requests" component={AdminRequests} />
-      <Route path="/admin/profile" component={AdminProfile} /> 
-      
+      <Route path="/admin/profile" component={AdminProfile} />
+
       <Route component={NotFound} />
     </Switch>
   );

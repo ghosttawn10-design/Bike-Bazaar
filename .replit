@@ -32,3 +32,4 @@ channel = "stable-25_05"
 
 [userenv.shared]
 SUPABASE_URL = "https://togllsipnxhgttrfhkjo.supabase.co"
+DATABASE_URL = "postgresql://neondb_owner:npg_sJB8S1tAIaOz@ep-shiny-recipe-am84ulk7-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
