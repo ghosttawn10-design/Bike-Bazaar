@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type Request, type IRouter } from "express";
 import { db, adminProfileTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
@@ -22,6 +22,48 @@ function hashPassword(password: string): string {
   return crypto.createHash("sha256").update(password + "powersport_salt_2024").digest("hex");
 }
 
+const TOKEN_SECRET = process.env.SESSION_SECRET ?? "powersport-marketplace-secret-2024";
+const TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function generateToken(adminId: number): string {
+  const issuedAt = Date.now().toString();
+  const payload = `${adminId}:${issuedAt}`;
+  const sig = crypto.createHmac("sha256", TOKEN_SECRET).update(payload).digest("hex");
+  return Buffer.from(`${payload}:${sig}`).toString("base64url");
+}
+
+function verifyToken(token: string): number | null {
+  try {
+    const decoded = Buffer.from(token, "base64url").toString();
+    const lastColon = decoded.lastIndexOf(":");
+    if (lastColon === -1) return null;
+    const payload = decoded.slice(0, lastColon);
+    const sig = decoded.slice(lastColon + 1);
+    const expectedSig = crypto.createHmac("sha256", TOKEN_SECRET).update(payload).digest("hex");
+    if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expectedSig, "hex"))) return null;
+    const firstColon = payload.indexOf(":");
+    const adminId = parseInt(payload.slice(0, firstColon), 10);
+    const issuedAt = parseInt(payload.slice(firstColon + 1), 10);
+    if (isNaN(adminId) || isNaN(issuedAt)) return null;
+    if (Date.now() - issuedAt > TOKEN_MAX_AGE_MS) return null;
+    return adminId;
+  } catch {
+    return null;
+  }
+}
+
+function getAdminId(req: Request): number | undefined {
+  const sessionAdminId = (req.session as Record<string, unknown>).adminId as number | undefined;
+  if (sessionAdminId) return sessionAdminId;
+
+  const auth = req.headers.authorization;
+  if (auth?.startsWith("Bearer ")) {
+    const adminId = verifyToken(auth.slice(7));
+    if (adminId) return adminId;
+  }
+  return undefined;
+}
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -33,13 +75,13 @@ router.post("/login", async (req, res) => {
     if (hashPassword(password) !== admin.passwordHash) {
       return res.status(401).json({ error: "invalid_credentials", message: "Invalid email or password" });
     }
+
+    const token = generateToken(admin.id);
+
     (req.session as Record<string, unknown>).adminId = admin.id;
     req.session.save((saveErr) => {
-      if (saveErr) {
-        req.log.error({ err: saveErr }, "Failed to save session");
-        return res.status(500).json({ error: "internal_error", message: "Login failed" });
-      }
-      res.json({ success: true, admin: formatAdmin(admin) });
+      if (saveErr) req.log.error({ err: saveErr }, "Failed to save session");
+      res.json({ success: true, admin: formatAdmin(admin), token });
     });
   } catch (err) {
     req.log.error({ err }, "Failed to login");
@@ -56,7 +98,7 @@ router.post("/logout", (req, res) => {
 
 router.get("/me", async (req, res) => {
   try {
-    const adminId = (req.session as Record<string, unknown>).adminId as number | undefined;
+    const adminId = getAdminId(req);
     if (!adminId) return res.status(401).json({ error: "unauthorized", message: "Not authenticated" });
     const [admin] = await db.select().from(adminProfileTable).where(eq(adminProfileTable.id, adminId));
     if (!admin) return res.status(401).json({ error: "unauthorized", message: "Admin not found" });
@@ -80,7 +122,7 @@ router.get("/profile", async (req, res) => {
 
 router.put("/profile", async (req, res) => {
   try {
-    const adminId = (req.session as Record<string, unknown>).adminId as number | undefined;
+    const adminId = getAdminId(req);
     if (!adminId) return res.status(401).json({ error: "unauthorized", message: "Not authenticated" });
 
     const {
@@ -115,10 +157,9 @@ router.put("/profile", async (req, res) => {
   }
 });
 
-// Upload hero image as a file → Supabase Storage
 router.post("/upload-hero", upload.single("image"), async (req, res) => {
   try {
-    const adminId = (req.session as Record<string, unknown>).adminId as number | undefined;
+    const adminId = getAdminId(req);
     if (!adminId) return res.status(401).json({ error: "unauthorized", message: "Not authenticated" });
     if (!req.file) return res.status(400).json({ error: "no_file", message: "No image file provided" });
 
@@ -135,10 +176,9 @@ router.post("/upload-hero", upload.single("image"), async (req, res) => {
   }
 });
 
-// Send a test email
 router.post("/test-email", async (req, res) => {
   try {
-    const adminId = (req.session as Record<string, unknown>).adminId as number | undefined;
+    const adminId = getAdminId(req);
     if (!adminId) return res.status(401).json({ error: "unauthorized", message: "Not authenticated" });
 
     await sendAdminNotificationEmail(

@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
-import { setBaseUrl } from "@workspace/api-client-react";
+import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 import Home from "@/pages/home";
 import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
@@ -19,6 +19,8 @@ import AdminProfile from "@/pages/admin/profile";
 if (import.meta.env.VITE_API_URL) {
   setBaseUrl(import.meta.env.VITE_API_URL as string);
 }
+
+setAuthTokenGetter(() => localStorage.getItem("adminToken"));
 
 const queryClient = new QueryClient({
   defaultOptions: {

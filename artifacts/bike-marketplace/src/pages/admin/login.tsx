@@ -22,8 +22,10 @@ export default function AdminLogin() {
       data: { email, password }
     }, {
       onSuccess: (data) => {
-        if (data.success) {
+        const result = data as { success: boolean; token?: string };
+        if (result.success) {
           localStorage.setItem("adminSession", "true");
+          if (result.token) localStorage.setItem("adminToken", result.token);
           toast({ title: "Authentication successful" });
           setLocation("/admin");
         } else {

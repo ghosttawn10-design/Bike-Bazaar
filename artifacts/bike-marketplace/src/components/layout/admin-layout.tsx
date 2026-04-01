@@ -33,6 +33,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     logout.mutate({}, {
       onSuccess: () => {
         localStorage.removeItem('adminSession');
+        localStorage.removeItem('adminToken');
         toast({ title: "Logged out successfully" });
         setLocation("/admin/login");
       }
