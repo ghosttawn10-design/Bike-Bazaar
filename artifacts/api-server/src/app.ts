@@ -11,6 +11,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app: Express = express();
 
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
@@ -31,8 +33,12 @@ app.use(
   }),
 );
 
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : true;
+
 app.use(cors({
-  origin: true,
+  origin: allowedOrigins,
   credentials: true,
 }));
 
