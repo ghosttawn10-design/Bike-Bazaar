@@ -34,7 +34,13 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "invalid_credentials", message: "Invalid email or password" });
     }
     (req.session as Record<string, unknown>).adminId = admin.id;
-    res.json({ success: true, admin: formatAdmin(admin) });
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        req.log.error({ err: saveErr }, "Failed to save session");
+        return res.status(500).json({ error: "internal_error", message: "Login failed" });
+      }
+      res.json({ success: true, admin: formatAdmin(admin) });
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to login");
     res.status(500).json({ error: "internal_error", message: "Login failed" });

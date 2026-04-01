@@ -33,12 +33,8 @@ app.use(
   }),
 );
 
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL]
-  : true;
-
 app.use(cors({
-  origin: allowedOrigins,
+  origin: process.env.FRONTEND_URL || true,
   credentials: true,
 }));
 
@@ -52,12 +48,18 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   },
 }));
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api", router);
+
+const frontendDist = path.join(__dirname, "../frontend");
+app.use(express.static(frontendDist));
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
 
 export default app;
